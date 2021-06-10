@@ -12,7 +12,7 @@ py_library(
         ":base_model_util",
         "//third_party/py/einops",
         "//third_party/py/mint/protos:model_py_pb2",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -21,7 +21,7 @@ py_library(
     srcs = ["base_model_util.py"],
     srcs_version = "PY3",
     deps = [
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -32,7 +32,7 @@ py_library(
     deps = [
         ":base_model_util",
         ":base_models",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -44,37 +44,7 @@ py_test(
     python_version = "PY3",
     deps = [
         ":base_models",
-        "//third_party/py/tensorflow:tensorflow_google",
-    ],
-)
-
-py_library(
-    name = "vap_model",
-    srcs = ["vap_model.py"],
-    srcs_version = "PY3",
-    deps = [
-        ":base_models",
-        ":multi_modal_model",
-        ":multi_modal_model_util",
-        "//third_party/py/absl/logging",
-        "//third_party/py/mint/protos:dataset_py_pb2",
-        "//third_party/py/mint/protos:model_py_pb2",
-        "//third_party/py/mint/utils:inputs_util",
-        "//third_party/py/tensorflow:tensorflow_google",
-        "//third_party/tensorflow_models/object_detection/metrics:coco_evaluation",
-    ],
-)
-
-py_test(
-    name = "vap_model_test",
-    size = "large",
-    timeout = "long",
-    srcs = ["vap_model_test.py"],
-    python_version = "PY3",
-    deps = [
-        ":vap_model",
-        "//third_party/py/mint/protos:model_py_pb2",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -113,7 +83,7 @@ py_library(
         "//third_party/py/mint/protos:dataset_py_pb2",
         "//third_party/py/mint/protos:model_py_pb2",
         "//third_party/py/mint/utils:inputs_util",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -126,7 +96,7 @@ py_test(
     deps = [
         ":fact_model",
         "//third_party/py/mint/protos:model_py_pb2",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
     ],
 )
 
@@ -136,8 +106,7 @@ py_library(
     srcs_version = "PY3",
     deps = [
         ":fact_model",
-        ":vap_model",
-        "//third_party/py/tensorflow:tensorflow_google",
+        "//third_party/py/tensorflow",
         "//third_party/py/tensorflow_addons",
     ],
 )

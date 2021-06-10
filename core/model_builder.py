@@ -1,12 +1,6 @@
 """Build model from model config."""
 
 from mint.core import fact_model
-from mint.core import vap_model
-
-
-def _build_vap_model(model_config, is_training):
-  model = vap_model.VAPModel(model_config.vap_model, is_training)
-  return model
 
 
 def _build_fact_model(model_config, is_training):
@@ -15,7 +9,6 @@ def _build_fact_model(model_config, is_training):
 
 
 MODEL_BUILDER_MAP = {
-    'vap_model': _build_vap_model,
     'fact_model': _build_fact_model,
 }
 
