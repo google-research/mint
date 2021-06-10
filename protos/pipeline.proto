@@ -1,0 +1,19 @@
+syntax = "proto2";
+
+package mint.protos;
+
+import "third_party/py/mint/protos/dataset.proto";
+import "third_party/py/mint/protos/eval.proto";
+import "third_party/py/mint/protos/model.proto";
+import "third_party/py/mint/protos/train.proto";
+
+// Convenience message for configuring a training and eval pipeline. Allows all
+// of the pipeline parameters to be configured from one file.
+message TrainEvalPipelineConfig {
+  optional MultiModalModel multi_modal_model = 1;
+  optional TrainConfig train_config = 2;
+  optional Dataset train_dataset = 3;
+  optional EvalConfig eval_config = 4;
+  optional Dataset eval_dataset = 5;
+  extensions 1000 to max;
+}

@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package mint.protos;
+
+// Message for configuring multi_modal cbt evaluation jobs.
+message EvalConfig {
+  optional int32 batch_size = 1 [default = 4];
+
+  // Metrics Options
+  optional EvalMetric eval_metric = 2;
+}
+
+message EvalMetric {
+  oneof metric_oneof {
+    MotionPredictionMetrics motion_prediction_metrics = 1;
+    MotionGenerationMetrics motion_generation_metrics = 2;
+  }
+}
+
+// 3D Motion Prediction Metrics.
+message MotionPredictionMetrics {
+  optional bool add_positional_metrics = 1 [default = false];
+  repeated float pck_thresholds = 3;
+}
+
+// 3D Motion Generation Metrics.
+message MotionGenerationMetrics {
+  repeated float pck_thresholds = 1;
+  optional int32 num_joints = 2 [default = 24];
+}

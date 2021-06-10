@@ -1,0 +1,176 @@
+syntax = "proto2";
+
+package mint.protos;
+
+message MultiModalModel {
+  oneof model {
+    VAPModel vap_model = 1;
+    FACTModel fact_model = 2;
+  }
+}
+
+message VAPModel {
+  repeated Modality modality = 1;
+  optional CrossModalModel cross_modal_model = 2;
+
+  // Params for task control
+  enum TaskType {
+    DEFAULT_TASK = 0;
+    GENRE_CLASSIFICATION = 1;
+  }
+  optional TaskType task = 3;
+
+  // How many output categories the network will predict. Required for the genre
+  // classification task.
+  optional int32 target_num_categories = 4;
+}
+
+message FACTModel {
+  repeated Modality modality = 1;
+  optional CrossModalModel cross_modal_model = 2;
+  optional string fk_path = 3;
+}
+
+// Options for pre-processing layers on audio input
+message AudioPreprocessing {
+  oneof options {
+    MelSpectrogramOptions mel_spec_options = 1;
+  }
+}
+
+message VisualPreprocessing {}
+
+message PatchEmbedding {
+  optional int32 image_height = 1 [default = 224];
+  optional int32 image_width = 2 [default = 224];
+  optional int32 num_channel = 3 [default = 3];
+  optional int32 depth = 4 [default = 1];
+  optional int32 stride = 5 [default = 16];
+  optional int32 patch_size = 6 [default = 16];
+  optional string padding = 7 [default = 'VALID'];
+  // hidden_size is the output dim of the model.
+  optional int32 hidden_size = 8 [default = 512];
+  enum ModelType {
+    DEFAULT_MODEL = 0;
+    MLP = 1;
+    CONV2D = 2;
+  }
+  optional ModelType model = 9 [default = MLP];
+  optional float weight_decay = 10 [default = 0.];
+}
+
+// Config for the text embeddings
+message TextEmbedding {
+  // The vocabulary size of 'input_ids'.
+  optional int32 vocab_size = 1;
+  optional int32 embedding_width = 2;
+  optional int32 max_sequence_length = 3;
+  // The vocabulary size of the 'token_type_ids'.
+  optional int32 type_vocab_size = 4 [default = 16];
+}
+
+message ModalityInputConfig {
+  optional bool use_look_ahead_mask = 2 [default = false];
+}
+
+message Modality {
+  optional string feature_name = 1;
+  optional int32 feature_dim = 2;
+  optional int32 sequence_length = 3;
+  optional ModalityInputConfig input_config = 4;
+  repeated ModalityPreprocessor preprocessor = 5;
+  repeated ModalityModel model = 6;
+}
+
+message ModalityModel {
+  oneof model {
+    Transformer transformer = 1;
+    MLP mlp = 2;
+    PatchEmbedding patch_embedding = 3;
+    TextEmbedding text_embedding = 4;
+  }
+}
+
+message MLP {
+  optional float initializer_range = 1 [default = 0.02];
+  optional string hidden_act = 2 [default = "gelu"];
+  // Output dimension.
+  optional int32 out_dim = 3;
+}
+
+message Conv2D {
+  optional int32 hidden_size = 1 [default = 512];
+  optional int32 kernel_size = 2 [default = 16];
+}
+
+message ModalityPreprocessor {
+  oneof preprocessor {
+    AudioPreprocessing audio_preprocessor = 1;
+    VisualPreprocessing visual_preprocessor = 2;
+  }
+}
+
+message CrossModalModel {
+  // The cross modal function.
+  optional string modality_a = 1;
+  optional string modality_b = 2;
+  oneof model {
+    Transformer transformer = 3;
+    MLP mlp = 4;
+  }
+
+  // Cross modal concatenate dimension
+  enum CrossModalConcatDim {
+    DEFAULT_CONCAT = 0;
+    SEQUENCE_WISE = 1;
+    CHANNEL_WISE = 2;
+  }
+  optional CrossModalConcatDim cross_modal_concat_dim = 5
+      [default = SEQUENCE_WISE];
+  // Output MLP layer config.
+  optional MLP output_layer = 6;
+
+  // Preprocess each feature if necessary.
+  enum Preprocess {
+    DEFAULT_NONE = 0;
+    // Prepare feature for mutual information loss.
+    CONTRASTIVE = 1;
+  }
+  optional Preprocess preprocess = 7;
+}
+
+message Transformer {
+  // Modality specific parameters.
+  optional int32 hidden_size = 1 [default = 768];
+  optional int32 num_hidden_layers = 2 [default = 12];
+  optional int32 num_attention_heads = 3 [default = 12];
+  optional int32 max_position_embeddings = 4 [default = 512];
+
+  // Common params for transformer.
+  optional int32 intermediate_size = 5 [default = 3072];
+  optional string hidden_act = 6 [default = "gelu"];
+  optional float hidden_dropout_prob = 7 [default = 0.1];
+  optional float attention_probs_dropout_prob = 8 [default = 0.1];
+  optional float initializer_range = 9 [default = 0.02];
+  optional string masked_loss_type = 10 [default = "nce"];
+
+  // Parameters for spatial transformer.
+  optional bool add_spatial_attention = 11 [default = false];
+  optional int32 sp_hidden_size = 12 [default = 768];
+  optional int32 sp_num_attention_heads = 13 [default = 12];
+  optional int32 sp_num_hidden_layers = 14 [default = 12];
+
+  // Whether or not concat the input with a cls token.
+  optional bool add_cls_token = 15 [default = false];
+  optional float weight_decay = 16 [default = 0.];
+}
+
+message MelSpectrogramOptions {
+  optional float sample_rate_hz = 1 [default = 16000.0];
+  optional float fft_frame_len_ms = 2 [default = 128.0];
+  optional float fft_frame_step_ms = 3 [default = 5.0];
+  optional float normalization_threshold = 4 [default = 5e-4];
+  optional int32 mel_bins = 5 [default = 256];
+  optional float mel_low_hz = 6 [default = 0.0];
+  optional float mel_high_hz = 7 [default = 8000.0];
+}

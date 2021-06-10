@@ -1,0 +1,34 @@
+name: "mint"
+
+description: "Multi-modal Content Creation Lib."
+
+third_party {
+  url {
+    type: PIPER
+    value: "http://google3/third_party/py/mint/"
+  }
+}
+
+presubmit: {
+  path_expression: "//depot/google3/third_party/py/mint/..."
+
+  review_notify: "mint-dev"
+
+  # The string "do not submit" in ALL CAPS cannot be in submitted files.
+  check_do_not_submit: { action: SUBMIT }
+
+  # Warn if the following TAP queues weren't run.
+  check_tests: {
+    action: REVIEW
+    action: SUBMIT
+    failure_status: ERROR
+    review_results_age_limit: 0
+  }
+
+  check_lint: {
+    report_all_errors: true
+    action: REVIEW
+    action: SUBMIT
+  }
+
+}
