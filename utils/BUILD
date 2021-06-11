@@ -39,28 +39,3 @@ py_test(
     ],
 )
 
-py_library(
-    name = "text_util",
-    srcs = ["text_util.py"],
-    srcs_version = "PY3",
-    deps = [
-        "//third_party/py/tensorflow",
-        "//third_party/py/tensorflow_text",
-        "//third_party/tensorflow_models/official/nlp/modeling",
-    ],
-)
-
-py_test(
-    name = "text_util_test",
-    srcs = ["text_util_test.py"],
-    data = [
-        "//third_party/tensorflow_models/google/nlp/data/testdata:vocab.txt",
-    ],
-    python_version = "PY3",
-    deps = [
-        ":text_util",
-        "//testing/pybase",
-        "//third_party/py/mint/protos:dataset_py_pb2",
-        "//third_party/py/tensorflow",
-    ],
-)
