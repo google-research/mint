@@ -16,7 +16,7 @@ import os
 from google.protobuf import text_format
 from mint.protos import pipeline_pb2
 import tensorflow.google as tf
-from google3.third_party.tensorflow.python.lib.io import file_io  # pylint: disable=g-direct-tensorflow-import
+from tensorflow.python.lib.io import file_io
 
 
 def get_configs_from_pipeline_file(pipeline_config_path, config_override=None):

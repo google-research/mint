@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for google3.research.vision.couchpotato.choreo_generation.models.multi_modal.utils.inputs_util."""
-
 
 from mint.protos import dataset_pb2
 from mint.utils import inputs_util
