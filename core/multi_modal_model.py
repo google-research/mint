@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Abstract multi-modal model.
-
-This file defines a generic multi-modal model base class for multi-modal
-video understanding task: go/multi-modal-video-understanding
-"""
+"""Abstract multi-modal model."""
 import abc
 import google3
 

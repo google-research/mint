@@ -14,9 +14,7 @@ limitations under the License.
 ==============================================================================*/
 syntax = "proto2";
 
-package mint.protos;
-
-import "third_party/py/mint/protos/preprocessor.proto";
+import "mint/protos/preprocessor.proto";
 
 message Dataset {
   // Dataset name.

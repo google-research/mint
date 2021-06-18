@@ -19,74 +19,9 @@ package mint.protos;
 // Message for preprocessing the data.
 message Preprocessor {
   oneof preprocessor {
-    Subsample subsample = 1;
-    NormalizeKeypointsToCenter normalize_keypoints_to_center = 2;
-    TextPreprocessor text_preprocessor = 3;
-    MaskStart mask_start = 4;
-    ImagePreprocessor image_preprocessor = 5;
-    FACTPreprocessor fact_preprocessor = 6;
+    FACTPreprocessor fact_preprocessor = 1;
   }
 }
 
 // A preprocessor for FACT model with AIST++ dataset.
 message FACTPreprocessor {}
-
-// Subsample the input sequence.
-message Subsample {
-  // The sample ratio before and after.
-  optional int32 subsample_ratio = 1 [default = 1];
-}
-
-// Mask out the first feature, for classification task
-message MaskStart {
-  optional float mask_value = 1 [default = 0.];
-  optional string modality_name = 2;
-}
-
-// Normalize keypoints to the center keypoint.
-message NormalizeKeypointsToCenter {
-  // The center keypoint index.
-  optional int32 center_keypoint_index = 1 [default = 0];
-  // Number of keypoints.
-  optional int32 num_keypoints = 2;
-  // The keypoint dimension.
-  optional int32 keypoint_dim = 3;
-}
-
-// Image preprocessor.
-message ImagePreprocessor {
-  optional int32 image_size = 1 [default = 224];
-  optional int32 num_channels = 2 [default = 3];
-}
-
-// Text preprocessor.
-message TextPreprocessor {
-  // TODO(anagrani) this isn't being used yet, can be used in dataloader
-  optional string input_path = 1 [default = ""];
-
-  // TODO(anagrani) this isn't being used yet, can be used in dataloader
-  optional int32 doc_batch_size = 2 [default = 8];
-
-  // TODO(anagrani) this isn't being used yet, can be used in dataloader
-  optional int32 global_batch_size = 3 [default = 512];
-
-  optional bool is_training = 4 [default = true];
-
-  optional int32 seq_length = 5 [default = 512];
-
-  optional int32 max_predictions_per_seq = 6 [default = 76];
-
-  // TODO(anagrani) this isn't being used yet, can be used in dataloader
-  optional bool use_next_sentence_label = 7 [default = false];
-
-  // TODO(anagrani) this isn't being used yet, can be used in dataloader
-  optional string text_field_name = 8 [default = "text"];
-
-  optional string vocab_file_path = 9 [default = ""];
-
-  optional float masking_rate = 10 [default = 0.15];
-
-  optional bool use_whole_word_masking = 11 [default = false];
-
-  optional bool deterministic = 12 [default = false];
-}

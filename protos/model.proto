@@ -18,69 +18,14 @@ package mint.protos;
 
 message MultiModalModel {
   oneof model {
-    VAPModel vap_model = 1;
-    FACTModel fact_model = 2;
+    FACTModel fact_model = 1;
   }
-}
-
-message VAPModel {
-  repeated Modality modality = 1;
-  optional CrossModalModel cross_modal_model = 2;
-
-  // Params for task control
-  enum TaskType {
-    DEFAULT_TASK = 0;
-    GENRE_CLASSIFICATION = 1;
-  }
-  optional TaskType task = 3;
-
-  // How many output categories the network will predict. Required for the genre
-  // classification task.
-  optional int32 target_num_categories = 4;
 }
 
 message FACTModel {
   repeated Modality modality = 1;
   optional CrossModalModel cross_modal_model = 2;
   optional string fk_path = 3;
-}
-
-// Options for pre-processing layers on audio input
-message AudioPreprocessing {
-  oneof options {
-    MelSpectrogramOptions mel_spec_options = 1;
-  }
-}
-
-message VisualPreprocessing {}
-
-message PatchEmbedding {
-  optional int32 image_height = 1 [default = 224];
-  optional int32 image_width = 2 [default = 224];
-  optional int32 num_channel = 3 [default = 3];
-  optional int32 depth = 4 [default = 1];
-  optional int32 stride = 5 [default = 16];
-  optional int32 patch_size = 6 [default = 16];
-  optional string padding = 7 [default = 'VALID'];
-  // hidden_size is the output dim of the model.
-  optional int32 hidden_size = 8 [default = 512];
-  enum ModelType {
-    DEFAULT_MODEL = 0;
-    MLP = 1;
-    CONV2D = 2;
-  }
-  optional ModelType model = 9 [default = MLP];
-  optional float weight_decay = 10 [default = 0.];
-}
-
-// Config for the text embeddings
-message TextEmbedding {
-  // The vocabulary size of 'input_ids'.
-  optional int32 vocab_size = 1;
-  optional int32 embedding_width = 2;
-  optional int32 max_sequence_length = 3;
-  // The vocabulary size of the 'token_type_ids'.
-  optional int32 type_vocab_size = 4 [default = 16];
 }
 
 message ModalityInputConfig {
@@ -100,8 +45,6 @@ message ModalityModel {
   oneof model {
     Transformer transformer = 1;
     MLP mlp = 2;
-    PatchEmbedding patch_embedding = 3;
-    TextEmbedding text_embedding = 4;
   }
 }
 
@@ -119,8 +62,6 @@ message Conv2D {
 
 message ModalityPreprocessor {
   oneof preprocessor {
-    AudioPreprocessing audio_preprocessor = 1;
-    VisualPreprocessing visual_preprocessor = 2;
   }
 }
 
@@ -177,14 +118,4 @@ message Transformer {
   // Whether or not concat the input with a cls token.
   optional bool add_cls_token = 15 [default = false];
   optional float weight_decay = 16 [default = 0.];
-}
-
-message MelSpectrogramOptions {
-  optional float sample_rate_hz = 1 [default = 16000.0];
-  optional float fft_frame_len_ms = 2 [default = 128.0];
-  optional float fft_frame_step_ms = 3 [default = 5.0];
-  optional float normalization_threshold = 4 [default = 5e-4];
-  optional int32 mel_bins = 5 [default = 256];
-  optional float mel_low_hz = 6 [default = 0.0];
-  optional float mel_high_hz = 7 [default = 8000.0];
 }

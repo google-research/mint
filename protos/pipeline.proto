@@ -16,10 +16,10 @@ syntax = "proto2";
 
 package mint.protos;
 
-import "third_party/py/mint/protos/dataset.proto";
-import "third_party/py/mint/protos/eval.proto";
-import "third_party/py/mint/protos/model.proto";
-import "third_party/py/mint/protos/train.proto";
+import "mint/protos/dataset.proto";
+import "mint/protos/eval.proto";
+import "mint/protos/model.proto";
+import "mint/protos/train.proto";
 
 // Convenience message for configuring a training and eval pipeline. Allows all
 // of the pipeline parameters to be configured from one file.

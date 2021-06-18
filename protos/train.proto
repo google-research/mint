@@ -35,10 +35,6 @@ message TrainConfig {
   // MOTION_MODEL will only load the variables for motion model.
   enum CheckpointType {
     DEFAULT = 0;
-    MOTION_MODEL = 1;
-    FULL = 2;
-    VISUAL_MODEL = 3;
-    AUDIO_MODEL = 4;
   }
   optional CheckpointType fine_tune_checkpoint_type = 7;
 }
