@@ -15,7 +15,7 @@
 import os
 from google.protobuf import text_format
 from mint.protos import pipeline_pb2
-import tensorflow.google as tf
+import tensorflow as tf
 from tensorflow.python.lib.io import file_io
 
 
