@@ -108,28 +108,3 @@ def fact_preprocessing(example, modality_to_params, is_training):
   del example["audio_sequence"]
   return example
 
-
-def image_preprocessing(example, modality_to_params, is_training):
-  """Dataset preprocess function."""
-  modality_name = "visual"
-  input_length = modality_to_params[modality_name]["input_length"]
-  sequence = example.pop(f"{modality_name}_sequence")
-  image = tf.io.decode_image(sequence[0])
-  resize = modality_to_params[modality_name]["resize"]
-  crop_size = modality_to_params[modality_name]["crop_size"]
-
-  image = tf.image.convert_image_dtype(image, dtype=tf.float32)
-  if is_training:
-    image = tf.image.resize_with_pad(image, resize, resize)
-    image = tf.image.random_crop(image, [crop_size, crop_size, 3])
-    image = tf.image.random_flip_left_right(image)
-  else:
-    image = tf.image.resize_with_pad(image, crop_size, crop_size)
-
-  sequence = (image - 127.5) / 127.5
-
-  example[f"{modality_name}_input"] = sequence
-  example[f"{modality_name}_mask"] = tf.ones([input_length], dtype=tf.float32)
-  example[f"{modality_name}_mask"].set_shape([input_length])
-
-  return example

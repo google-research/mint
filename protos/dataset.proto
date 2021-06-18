@@ -35,13 +35,6 @@ message Dataset {
   enum BERTMaskType {
     DEFAULT_MASK = 0;
     CONTIGUOUS = 1;
-    // Mask out all the text spans.
-    TEXT_MASK = 2;
-    SPLIT_MASK = 3;
-    // Iteratively mask out text spans.
-    ITER_TEXT_MASK = 4;
-    // Iteratively mask out shot spans.
-    ITER_SHOT_MASK = 5;
   }
   optional BERTMaskType bert_mask_type = 6 [default = DEFAULT_MASK];
 
@@ -57,10 +50,6 @@ message Dataset {
     BEGINNING = 1;
     CENTER = 2;
     RANDOM = 3;
-    // Sample using text span anchors.
-    TEXT_ANCHORS = 4;
-    // Currently doing random sampling, but is required if using shot masking.
-    SHOT_ANCHORS = 5;
   }
 
   // How many output categories are in the input data. Required when the
@@ -80,13 +69,8 @@ message Dataset {
 
 message DataModality {
   oneof modality {
-    RawText raw_text = 1;
     GeneralModality general_modality = 2;
   }
-}
-
-message RawText {
-  optional string feature_name = 1 [default = "text"];
 }
 
 message GeneralModality {

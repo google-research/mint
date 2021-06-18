@@ -18,35 +18,6 @@ from mint.protos import model_pb2
 import tensorflow as tf
 
 
-class PatchLayerTest(tf.test.TestCase):
-
-  def test_run(self):
-    config = model_pb2.PatchEmbedding()
-    config.image_width = 8
-    config.image_height = 8
-    config.num_channel = 3
-    config.patch_size = 4
-    config.hidden_size = 16
-    config.stride = 4
-    config.depth = 1
-    patch_embedding_layer = base_models.PatchEmbedding(config)
-    input_tensor = tf.ones([4, 8, 8, 3])
-    out_tensor = patch_embedding_layer(input_tensor)
-    self.assertAllEqual(out_tensor.shape, [4, 1 * 2 * 2, 16])
-
-
-class AudioMelSpecPreprocessorTest(tf.test.TestCase):
-
-  def test_run(self):
-    config = model_pb2.MelSpectrogramOptions()
-    config.sample_rate_hz = 16000
-    config.fft_frame_step_ms = 10
-    pre_layer = base_models.AudioMelSpecPreprocessor(config)
-    input_tensor = tf.ones([4, 16000, 1])
-    out_tensor = pre_layer(input_tensor)
-    self.assertAllEqual(out_tensor.numpy().shape, [4, 100, 256])
-
-
 class TransformerModelTest(tf.test.TestCase):
 
   def test_run(self):

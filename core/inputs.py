@@ -97,13 +97,6 @@ def create_input(train_eval_config,
   # Data preprocessing and augmentation
   for da_step_config in dataset_config.data_augmentation_options:
     da_step_type = da_step_config.WhichOneof("preprocessor")
-    if da_step_type == "image_preprocessor":
-      ds = ds.map(
-          functools.partial(
-              inputs_util.image_preprocessing,
-              modality_to_params=modality_to_params,
-              is_training=is_training),
-          num_parallel_calls=num_cpu_threads)
     if da_step_type == "fact_preprocessor":
       ds = ds.map(
           functools.partial(
