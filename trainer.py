@@ -20,14 +20,14 @@ from mint.core import learning_schedules
 from mint.core import model_builder
 from mint.ctl import single_task_trainer
 from mint.utils import config_util
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
 
 
 TRAIN_STRATEGY = ['tpu', 'gpu']
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum('train_strategy', TRAIN_STRATEGY[0], TRAIN_STRATEGY,
+flags.DEFINE_enum('train_strategy', TRAIN_STRATEGY[1], TRAIN_STRATEGY,
                   'Whether to train with TPUs or Mirrored GPUs.')
 flags.DEFINE_string('master', None, 'BNS name of the TensorFlow tpu to use.')
 flags.DEFINE_string('config_path', None, 'Path to the config file.')

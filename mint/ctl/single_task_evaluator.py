@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """An evaluator object that can evaluate models with a single output."""
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
 
 

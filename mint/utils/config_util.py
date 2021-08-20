@@ -34,7 +34,7 @@ def get_configs_from_pipeline_file(pipeline_config_path, config_override=None):
       config objects.
   """
   pipeline_config = pipeline_pb2.TrainEvalPipelineConfig()
-  with tf.gfile.GFile(pipeline_config_path, 'r') as f:
+  with tf.io.gfile.GFile(pipeline_config_path, 'r') as f:
     proto_str = f.read()
     text_format.Merge(proto_str, pipeline_config)
   if config_override:
@@ -84,6 +84,6 @@ def save_pipeline_config(pipeline_config, directory):
     file_io.recursive_create_dir(directory)
   pipeline_config_path = os.path.join(directory, 'pipeline.config')
   config_text = text_format.MessageToString(pipeline_config)
-  with tf.gfile.Open(pipeline_config_path, 'wb') as f:
+  with tf.io.gfile.Open(pipeline_config_path, 'wb') as f:
     tf.logging.info('Writing pipeline config file to %s', pipeline_config_path)
     f.write(config_text)

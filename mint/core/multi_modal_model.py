@@ -13,7 +13,6 @@
 # limitations under the License.
 """Abstract multi-modal model."""
 import abc
-import google3
 
 import tensorflow as tf
 

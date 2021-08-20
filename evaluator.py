@@ -21,7 +21,7 @@ from mint.core import inputs
 from mint.core import model_builder
 from mint.ctl import single_task_evaluator
 from mint.utils import config_util
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
 
 

@@ -16,6 +16,8 @@ syntax = "proto2";
 
 package mint.protos;
 
+import "mint/protos/preprocessor.proto";
+
 message MultiModalModel {
   oneof model {
     FACTModel fact_model = 1;
@@ -62,6 +64,7 @@ message Conv2D {
 
 message ModalityPreprocessor {
   oneof preprocessor {
+    FACTPreprocessor fact_preprocessor = 1;
   }
 }
 
