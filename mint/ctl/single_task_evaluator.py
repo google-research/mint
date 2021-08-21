@@ -60,7 +60,7 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
   def eval_begin(self):
     """Actions to take once before every eval loop."""
     for metric in self.metrics:
-      metric.reset_states()
+      metric.reset_state()
 
   def eval_step(self, iterator):
     """One eval step. Called multiple times per eval loop by the superclass."""

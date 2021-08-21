@@ -151,19 +151,22 @@ class FrechetFeatDist(tf.keras.metrics.Metric):
       self.extract_func = extract_manual_features
     else:
       raise ValueError("%s is not support!" % mode)
-    self.dist = 0
+    self.traget_feat_list = []
+    self.pred_feat_list = []
 
-  def update_state(self, target_list, pred_list):
-    traget_feat_list = np.array([
-        self.extract_func(target.numpy()) for target in target_list])
-    pred_feat_list = np.array([
-        self.extract_func(pred.numpy()) for pred in pred_list])
-    self.dist = calculate_frechet_distance(
-        mu1=np.mean(traget_feat_list, axis=0),
-        sigma1=np.cov(traget_feat_list, rowvar=False),
-        mu2=np.mean(pred_feat_list, axis=0),
-        sigma2=np.cov(pred_feat_list, rowvar=False),
-    )
+  def reset_state(self):
+    self.traget_feat_list.clear()
+    self.pred_feat_list.clear()
 
+  def update_state(self, target, pred):
+    self.traget_feat_list.append(self.extract_func(target.numpy()))
+    self.pred_feat_list.append(self.extract_func(pred.numpy()))
+    
   def result(self):
-    return self.dist
+    frechet_dist = calculate_frechet_distance(
+        mu1=np.mean(self.traget_feat_list, axis=0),
+        sigma1=np.cov(self.traget_feat_list, rowvar=False),
+        mu2=np.mean(self.pred_feat_list, axis=0),
+        sigma2=np.cov(self.pred_feat_list, rowvar=False),
+    )
+    return frechet_dist

@@ -102,7 +102,11 @@ class FACTModel(multi_modal_model.MultiModalModel):
   def get_metrics(self, eval_config):
     """Computes metrics."""
     eval_metric_config = eval_config.eval_metric.motion_generation_metrics
-    eval_metrics = [metrics.EulerAnglesError(eval_metric_config.num_joints)]
+    eval_metrics = [
+        metrics.EulerAnglesError(eval_metric_config.num_joints),
+        metrics.FrechetFeatDist(mode="kinetic"),
+        metrics.FrechetFeatDist(mode="manual"),
+    ]
     return eval_metrics
 
   def compute_motion_generation_loss(self, pred_tensors, target_tensors):
