@@ -5,7 +5,15 @@
 This package contains the model implementation and training infrastructure of
 our AI Choreographer. 
 
-## Setup
+## Get started
+
+#### Pull the code
+```
+git clone https://github.com/liruilong940607/mint --recursive
+```
+Note here `--recursive` is important as it will automatically clone the submodule ([orbit](https://github.com/tensorflow/models/tree/master/orbit)) as well.
+
+#### Install dependencies
 ```
 conda create -n mint python=3.7
 conda activate mint
@@ -22,21 +30,35 @@ cd /tmp/einops/ && pip install .
 git clone https://github.com/google/aistplusplus_api /tmp/aistplusplus_api
 cd /tmp/aistplusplus_api && pip install -r requirements.txt && python setup.py install
 ```
+Note if you meet environment conflicts about numpy, you can try with `pip install numpy==1.20`. 
 
+#### Get the data
+See the [website](https://google.github.io/aistplusplus_dataset/)
 
-## Run
+#### Run the code
+
+1. complie protocols
 ```
-# complie protocols
 protoc ./mint/protos/*.proto
-# preprocess dataset into tfrecord
-python tools/preprocessing.py --split=train
-python tools/preprocessing.py --split=testval
-# run training
+```
+
+2. preprocess dataset into tfrecord
+```
+python tools/preprocessing.py \
+    --anno_dir="/mnt/data/aist_plusplus_final/" \
+    --audio_dir="/mnt/data/AIST/music/" \
+    --split=train
+python tools/preprocessing.py \
+    --anno_dir="/mnt/data/aist_plusplus_final/" \
+    --audio_dir="/mnt/data/AIST/music/" \
+    --split=testval
+```
+
+3. run training
+```
 python trainer.py --config_path ./configs/fact_v5_deeper_t10_cm12.config --model_dir ./checkpoints
 ```
-
-## Training Infrastructure
-* Orbit trainer
+Note you might want to change the `batch_size` in the config file if you meet OUT-OF-MEMORY issue.
 
 ## Citation
 
