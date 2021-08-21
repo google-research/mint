@@ -19,7 +19,7 @@ import tensorflow as tf
 
 def create_input(train_eval_config,
                  dataset_config,
-                 num_cpu_threads=8,
+                 num_cpu_threads=2,
                  is_training=True,
                  use_tpu=False):
   """Create batched input data.
