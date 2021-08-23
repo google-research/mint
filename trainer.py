@@ -39,8 +39,8 @@ flags.DEFINE_string(
     'head_initializer', 'he_normal',
     'Initializer for prediction head. Valid options are any '
     'of the tf.keras.initializers.')
-flags.DEFINE_integer('steps', 42000, 'Number of training steps')
-flags.DEFINE_integer('warmup_steps', 100,
+flags.DEFINE_integer('steps', 2400000, 'Number of training steps')
+flags.DEFINE_integer('warmup_steps', 1000,
                      'Number of learning rate warmup steps')
 flags.DEFINE_float('weight_decay', None, 'L2 regularization penalty to apply.')
 flags.DEFINE_float('grad_clip_norm', 0., 'Clip gradients by norm.')
@@ -168,7 +168,7 @@ def train():
       checkpoint_manager=tf.train.CheckpointManager(
           tf.train.Checkpoint(optimizer=optimizer, model=model_),
           directory=FLAGS.model_dir,
-          checkpoint_interval=100,
+          checkpoint_interval=1000,
           step_counter=trainer.optimizer.iterations,
           max_to_keep=5),
       summary_dir=FLAGS.model_dir,
