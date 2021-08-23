@@ -13,7 +13,11 @@
 # limitations under the License.
 """Metrics to measure the sequence generation accuracy."""
 import numpy as np
+from numpy.core.records import array
 from scipy import linalg
+from scipy.spatial.transform import Rotation as R
+import torch
+
 from mint.core import base_model_util
 import tensorflow as tf
 import tensorflow_graphics.geometry.transformation as tfg
@@ -21,6 +25,7 @@ import tensorflow_graphics.geometry.transformation as tfg
 # See https://github.com/google/aistplusplus_api/ for installation 
 from aist_plusplus.features.kinetic import extract_kinetic_features
 from aist_plusplus.features.manual import extract_manual_features
+from smplx import SMPL
 
 
 class EulerAnglesError(tf.keras.metrics.Metric):
@@ -105,7 +110,6 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
     Returns:
     --   : The Frechet Distance.
     """
-
     mu1 = np.atleast_1d(mu1)
     mu2 = np.atleast_1d(mu2)
 
@@ -141,9 +145,49 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
             + np.trace(sigma2) - 2 * tr_covmean)
 
 
+def eye(n, batch_shape):
+    iden = np.zeros(np.concatenate([batch_shape, [n, n]]))
+    iden[..., 0, 0] = 1.0
+    iden[..., 1, 1] = 1.0
+    iden[..., 2, 2] = 1.0
+    return iden
+
+
+def get_closest_rotmat(rotmats):
+    """
+    Finds the rotation matrix that is closest to the inputs in terms of the Frobenius norm. For each input matrix
+    it computes the SVD as R = USV' and sets R_closest = UV'. Additionally, it is made sure that det(R_closest) == 1.
+    Args:
+        rotmats: np array of shape (..., 3, 3).
+    Returns:
+        A numpy array of the same shape as the inputs.
+    """
+    u, s, vh = np.linalg.svd(rotmats)
+    r_closest = np.matmul(u, vh)
+
+    # if the determinant of UV' is -1, we must flip the sign of the last column of u
+    det = np.linalg.det(r_closest)  # (..., )
+    iden = eye(3, det.shape)
+    iden[..., 2, 2] = np.sign(det)
+    r_closest = np.matmul(np.matmul(u, iden), vh)
+    return r_closest
+    
+
+def recover_to_axis_angles(motion):
+    batch_size, seq_len, _ = motion.shape
+    transl = motion[:, :, 6:9]
+    rotmats = get_closest_rotmat(
+        np.reshape(motion[:, :, 9:], (batch_size, seq_len, 24, 3, 3))
+    )
+    axis_angles = R.from_matrix(
+        rotmats.reshape(-1, 3, 3)
+    ).as_rotvec().reshape(batch_size, seq_len, 24, 3)
+    return axis_angles, transl
+
+
 class FrechetFeatDist(tf.keras.metrics.Metric):
 
-  def __init__(self, mode="kinetic"):
+  def __init__(self, smpl_dir, mode="kinetic"):
     super(FrechetFeatDist, self).__init__(name='FrechetFeatDist')
     if mode == "kinetic":
       self.extract_func = extract_kinetic_features
@@ -151,6 +195,8 @@ class FrechetFeatDist(tf.keras.metrics.Metric):
       self.extract_func = extract_manual_features
     else:
       raise ValueError("%s is not support!" % mode)
+    self.smpl_model = SMPL(
+        model_path=smpl_dir, gender='MALE', batch_size=1)
     self.traget_feat_list = []
     self.pred_feat_list = []
 
@@ -159,14 +205,34 @@ class FrechetFeatDist(tf.keras.metrics.Metric):
     self.pred_feat_list.clear()
 
   def update_state(self, target, pred):
-    self.traget_feat_list.append(self.extract_func(target.numpy()))
-    self.pred_feat_list.append(self.extract_func(pred.numpy()))
+    def _warp_extract_func(tensor):
+      smpl_poses, smpl_trans = recover_to_axis_angles(tensor.numpy())
+      batch_size, seq_len, _24, _3 = smpl_poses.shape
+      smpl_poses = smpl_poses.reshape(-1, 24, 3)
+      smpl_trans = smpl_trans.reshape(-1, 3)
+      keypoints3d = self.smpl_model.forward(
+          global_orient=torch.from_numpy(smpl_poses[:, 0:1]).float(),
+          body_pose=torch.from_numpy(smpl_poses[:, 1:]).float(),
+          transl=torch.from_numpy(smpl_trans).float(),
+      ).joints.detach().numpy()[:, :24, :]
+      keypoints3d = keypoints3d.reshape(batch_size, seq_len, 24, 3)
+      return np.stack([self.extract_func(pts) for pts in keypoints3d])
+    self.traget_feat_list.append(
+        tf.py_function(func=_warp_extract_func, inp=[target], Tout=tf.float32))
+    self.pred_feat_list.append(
+        tf.py_function(func=_warp_extract_func, inp=[pred], Tout=tf.float32))
     
   def result(self):
-    frechet_dist = calculate_frechet_distance(
-        mu1=np.mean(self.traget_feat_list, axis=0),
-        sigma1=np.cov(self.traget_feat_list, rowvar=False),
-        mu2=np.mean(self.pred_feat_list, axis=0),
-        sigma2=np.cov(self.pred_feat_list, rowvar=False),
-    )
+    def _warp_distance_func(tensors1, tensors2):
+      array1, array2 = tensors1.numpy(), tensors2.numpy()
+      return calculate_frechet_distance(
+          mu1=np.mean(array1, axis=0),
+          sigma1=np.cov(array1, rowvar=False),
+          mu2=np.mean(array2, axis=0),
+          sigma2=np.cov(array2, rowvar=False),
+      )
+    tensors1 = tf.concat(self.traget_feat_list, axis=0)
+    tensors2 = tf.concat(self.pred_feat_list, axis=0)
+    frechet_dist = tf.py_function(
+        func=_warp_distance_func, inp=[tensors1, tensors2], Tout=tf.float32)
     return frechet_dist

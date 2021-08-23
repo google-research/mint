@@ -25,10 +25,10 @@ pip install --upgrade OpenEXR
 pip install tensorflow-graphics tensorflow-graphics-gpu
 
 git clone https://github.com/arogozhnikov/einops /tmp/einops
-cd /tmp/einops/ && pip install .
+cd /tmp/einops/ && pip install . -U
 
 git clone https://github.com/google/aistplusplus_api /tmp/aistplusplus_api
-cd /tmp/aistplusplus_api && pip install -r requirements.txt && python setup.py install
+cd /tmp/aistplusplus_api && pip install -r requirements.txt && pip install . -U
 ```
 Note if you meet environment conflicts about numpy, you can try with `pip install numpy==1.20`. 
 

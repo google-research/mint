@@ -14,6 +14,7 @@
 """The main FACT model and related functions."""
 
 import copy
+import os
 from mint.core import base_model_util
 from mint.core import base_models
 from mint.core import metrics
@@ -104,8 +105,10 @@ class FACTModel(multi_modal_model.MultiModalModel):
     eval_metric_config = eval_config.eval_metric.motion_generation_metrics
     eval_metrics = [
         metrics.EulerAnglesError(eval_metric_config.num_joints),
-        metrics.FrechetFeatDist(mode="kinetic"),
-        metrics.FrechetFeatDist(mode="manual"),
+        # metrics.FrechetFeatDist(
+        #   smpl_dir=os.path.dirname(self.config.fk_path), mode="kinetic"),
+        # metrics.FrechetFeatDist(
+        #   smpl_dir=os.path.dirname(self.config.fk_path), mode="manual"),
     ]
     return eval_metrics
 

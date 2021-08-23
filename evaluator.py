@@ -60,7 +60,6 @@ def evaluate():
 
   controller = orbit.Controller(
       evaluator=evaluator,
-      steps_per_loop=100,
       checkpoint_manager=tf.train.CheckpointManager(
           tf.train.Checkpoint(model=model_, global_step=model_.global_step),
           directory=FLAGS.model_dir,
@@ -76,4 +75,7 @@ def main(_):
 
 
 if __name__ == '__main__':
+  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+  # run Keras in eager mode as well.
+  tf.config.experimental_run_functions_eagerly(True)
   app.run(main)
