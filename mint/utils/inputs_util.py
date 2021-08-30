@@ -67,16 +67,14 @@ def fact_preprocessing(example, modality_to_params, is_training):
   motion_dim = modality_to_params["motion"]["feature_dim"]
   audio_dim = modality_to_params["audio"]["feature_dim"]
 
-  windows_size = tf.maximum(motion_input_length,
-                            motion_target_shift + motion_target_length)
-  windows_size = tf.maximum(windows_size, audio_input_length)
-
   # Pad the input motion translation from 3-dim to 9-dim.
   motion_dim += 6
   example["motion_sequence"] = tf.pad(example["motion_sequence"],
                                       [[0, 0], [6, 0]])
-
   if is_training:
+    windows_size = tf.maximum(motion_input_length,
+                              motion_target_shift + motion_target_length)
+    windows_size = tf.maximum(windows_size, audio_input_length)
     # the start frame id for this window.
     start = tf.random.uniform([],
                               0,
@@ -88,23 +86,23 @@ def fact_preprocessing(example, modality_to_params, is_training):
   # motion input: [start, start + motion_input_length)
   example["motion_input"] = example["motion_sequence"][start:start +
                                                        motion_input_length, :]
-  example["motion_mask"] = tf.ones([motion_input_length], dtype=tf.float32)
-  example["motion_mask"].set_shape([motion_input_length])
   example["motion_input"].set_shape([motion_input_length, motion_dim])
-  # motion target: [start + shift, start + shift + motion_target_length)
-  example["target"] = example["motion_sequence"][start +
-                                                 motion_target_shift:start +
-                                                 motion_target_shift +
-                                                 motion_target_length, :]
-  example["target"].set_shape([motion_target_length, motion_dim])
+  if is_training:
+    # motion target: [start + shift, start + shift + motion_target_length)
+    example["target"] = example["motion_sequence"][start +
+                                                  motion_target_shift:start +
+                                                  motion_target_shift +
+                                                  motion_target_length, :]
+    example["target"].set_shape([motion_target_length, motion_dim])
   del example["motion_sequence"]
 
-  # audio input: [start, start + audio_input_length)
-  example["audio_input"] = example["audio_sequence"][start:start +
-                                                     audio_input_length, :]
-  example["audio_input"].set_shape([audio_input_length, audio_dim])
-  example["audio_mask"] = tf.ones([audio_input_length], dtype=tf.float32)
-  example["audio_mask"].set_shape([audio_input_length])
+  if is_training:
+    # audio input: [start, start + audio_input_length)
+    example["audio_input"] = example["audio_sequence"][start:start +
+                                                      audio_input_length, :]
+    example["audio_input"].set_shape([audio_input_length, audio_dim])
+  else:
+    example["audio_input"] = example["audio_sequence"]
   del example["audio_sequence"]
   return example
 

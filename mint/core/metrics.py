@@ -200,7 +200,7 @@ class FrechetFeatDist(tf.keras.metrics.Metric):
     self.traget_feat_list = []
     self.pred_feat_list = []
 
-  def reset_state(self):
+  def reset_states(self):
     self.traget_feat_list.clear()
     self.pred_feat_list.clear()
 

@@ -14,6 +14,7 @@
 """An evaluator object that can evaluate models with a single output."""
 from third_party.tf_models import orbit
 import tensorflow as tf
+import numpy as np
 
 
 class SingleTaskEvaluator(orbit.StandardEvaluator):
@@ -60,7 +61,7 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
   def eval_begin(self):
     """Actions to take once before every eval loop."""
     for metric in self.metrics:
-      metric.reset_state()
+      metric.reset_states()
 
   def eval_step(self, iterator):
     """One eval step. Called multiple times per eval loop by the superclass."""
@@ -68,10 +69,22 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
     def step_fn(inputs):
       # Extract the target value and delete it from the input dict, so that
       # the model never sees it.
-      target = inputs.pop(self.label_key)
-      output = self.model(inputs)
-      for metric in self.metrics:
-        metric.update_state(target, output)
+      # target = inputs.pop(self.label_key)
+      # output = self.model(inputs)
+      # for metric in self.metrics:
+        # metric.update_state(target, output)
+      motion_results = [inputs["motion_input"]]
+      for frame_id in range(1200):
+        audio_input = inputs["audio_input"][:, frame_id: frame_id + 240]
+        motion_input = tf.concat(motion_results, axis=1)[:, -120:]
+        output = self.model({"motion_input": motion_input, "audio_input": audio_input})
+        motion_results.append(output[:, 0:1])
+      motion_results = tf.concat(motion_results, axis=1)
+      save_path = "./results/%s_%s.npy" % (
+          inputs["motion_name"][0].numpy().decode("utf-8"),
+          inputs["audio_name"][0].numpy().decode("utf-8"),
+      )
+      np.save(save_path, motion_results.numpy())
 
     # This is needed to handle distributed computation.
     self.strategy.run(step_fn, args=(next(iterator),))

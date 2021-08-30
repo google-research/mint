@@ -3,6 +3,7 @@ from absl import flags
 from absl import logging
 
 import os
+import random
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 import librosa
@@ -50,12 +51,16 @@ def write_tfexample(writers, tf_example):
     writers[random_writer_idx].write(tf_example.SerializeToString())
 
 
-def to_tfexample(motion_sequence, audio_sequence):
+def to_tfexample(motion_sequence, audio_sequence, motion_name, audio_name):
     features = dict()
+    features['motion_name'] = tf.train.Feature(
+        bytes_list=tf.train.BytesList(value=[motion_name.encode('utf-8')]))
     features['motion_sequence'] = tf.train.Feature(
         float_list=tf.train.FloatList(value=motion_sequence.flatten()))
     features['motion_sequence_shape'] = tf.train.Feature(
         int64_list=tf.train.Int64List(value=motion_sequence.shape))
+    features['audio_name'] = tf.train.Feature(
+        bytes_list=tf.train.BytesList(value=[audio_name.encode('utf-8')]))
     features['audio_sequence'] = tf.train.Feature(
         float_list=tf.train.FloatList(value=audio_sequence.flatten()))
     features['audio_sequence_shape'] = tf.train.Feature(
@@ -66,7 +71,7 @@ def to_tfexample(motion_sequence, audio_sequence):
 
 def load_cached_audio_features(seq_name):
     audio_name = seq_name.split("_")[-2]
-    return np.load(os.path.join(FLAGS.audio_cache_dir, f"{audio_name}.npy"))
+    return np.load(os.path.join(FLAGS.audio_cache_dir, f"{audio_name}.npy")), audio_name
 
 
 def cache_audio_features(seq_names):
@@ -153,11 +158,28 @@ def main(_):
         smpl_trans /= smpl_scaling
         smpl_poses = R.from_rotvec(
             smpl_poses.reshape(-1, 3)).as_matrix().reshape(smpl_poses.shape[0], -1)
-        smpl_motion = np.concatenate([smpl_poses, smpl_trans], axis=-1)
-        audio = load_cached_audio_features(seq_name)
+        smpl_motion = np.concatenate([smpl_trans, smpl_poses], axis=-1)
+        audio, audio_name = load_cached_audio_features(seq_name)
 
-        tfexample = to_tfexample(smpl_motion, audio)
+        tfexample = to_tfexample(smpl_motion, audio, seq_name, audio_name)
         write_tfexample(tfrecord_writers, tfexample)
+
+    # If testval, also test on un-paired data
+    if FLAGS.split == "testval":
+        logging.info("Also add un-paired motion-music data for testing.")
+        for i, seq_name in enumerate(seq_names * 10):
+            logging.info("processing %d / %d" % (i + 1, n_samples * 10))
+
+            smpl_poses, smpl_scaling, smpl_trans = AISTDataset.load_motion(
+                dataset.motion_dir, seq_name)
+            smpl_trans /= smpl_scaling
+            smpl_poses = R.from_rotvec(
+                smpl_poses.reshape(-1, 3)).as_matrix().reshape(smpl_poses.shape[0], -1)
+            smpl_motion = np.concatenate([smpl_trans, smpl_poses], axis=-1)
+            audio, audio_name = load_cached_audio_features(random.choice(seq_names))
+
+            tfexample = to_tfexample(smpl_motion, audio, seq_name, audio_name)
+            write_tfexample(tfrecord_writers, tfexample)
     
     close_tfrecord_writers(tfrecord_writers)
 
