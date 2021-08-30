@@ -56,7 +56,7 @@ def evaluate():
   model_.global_step = tf.Variable(initial_value=0, dtype=tf.int64)
   metrics_ = model_.get_metrics(eval_config)
   evaluator = single_task_evaluator.SingleTaskEvaluator(
-      dataset, label_key='target', model=model_, metrics=metrics_)
+      dataset, label_key='target', model=model_, metrics=metrics_, output_dir='./results2/')
 
   controller = orbit.Controller(
       evaluator=evaluator,

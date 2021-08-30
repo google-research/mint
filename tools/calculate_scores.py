@@ -205,10 +205,10 @@ if __name__ == "__main__":
     smpl = SMPL(model_path="/mnt/data/smpl/", gender='MALE', batch_size=1)
 
     result_features = {"kinetic": [], "manual": []}
-    result_files = glob.glob("results/*.npy")
+    result_files = glob.glob("results2/*.npy")
     for result_file in tqdm.tqdm(result_files):
         result_motion = np.load(result_file)  # [1, 120 + 1200, 225]
-        # visualize(result_motion, smpl)
+        visualize(result_motion, smpl)
         result_features["kinetic"].append(
             extract_feature(result_motion[:, 120:], smpl, "kinetic"))
         result_features["manual"].append(
