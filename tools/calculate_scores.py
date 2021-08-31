@@ -223,5 +223,7 @@ if __name__ == "__main__":
     # Evaluation: FID_k: ~38, FID_g: ~27
     # The AIChoreo paper used a bugged version of manual feature extractor from 
     # fairmotion (see here: https://github.com/facebookresearch/fairmotion/issues/50)
-    # So the FID_g here does not match with the paper. 
+    # So the FID_g here does not match with the paper. But this value should be correct.
+    # In this aistplusplus_api repo the feature extractor bug has been fixed.
+    # (see here: https://github.com/google/aistplusplus_api/blob/main/aist_plusplus/features/manual.py#L50)
     print('\nEvaluation: FID_k: {:.4f}, FID_g: {:.4f}\n'.format(FID_k, FID_g))
