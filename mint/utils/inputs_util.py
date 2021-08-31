@@ -90,9 +90,9 @@ def fact_preprocessing(example, modality_to_params, is_training):
   if is_training:
     # motion target: [start + shift, start + shift + motion_target_length)
     example["target"] = example["motion_sequence"][start +
-                                                  motion_target_shift:start +
-                                                  motion_target_shift +
-                                                  motion_target_length, :]
+                                                   motion_target_shift:start +
+                                                   motion_target_shift +
+                                                   motion_target_length, :]
     example["target"].set_shape([motion_target_length, motion_dim])
   del example["motion_sequence"]
 

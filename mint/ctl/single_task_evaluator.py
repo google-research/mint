@@ -28,7 +28,6 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
 
   def __init__(self,
                eval_dataset,
-               label_key,
                model,
                metrics,
                output_dir=None,
@@ -41,16 +40,12 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
     Arguments:
       eval_dataset: A `tf.data.Dataset` or `DistributedDataset` that contains a
         string-keyed dict of `Tensor`s.
-      label_key: The key corresponding to the label value in feature
-        dictionaries dequeued from `eval_dataset`. This key will be removed from
-        the dictionary before it is passed to the model.
       model: A `tf.Module` or Keras `Model` object to evaluate.
       metrics: A single `tf.keras.metrics.Metric` object, or a list of
         `tf.keras.metrics.Metric` objects.
       evaluator_options: An optional `orbit.StandardEvaluatorOptions` object.
     """
 
-    self.label_key = label_key
     self.model = model
     self.metrics = metrics if isinstance(metrics, list) else [metrics]
     self.output_dir = output_dir
@@ -72,6 +67,8 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
     def step_fn(inputs):
       # [batch_size, steps, motion_feature_dimension]
       outputs = self.model.infer_auto_regressive(inputs, steps=1200)
+      # [batch_size, motion_seq_length + steps, motion_feature_dimension]
+      outputs = tf.concat([inputs["motion_input"], outputs], axis=1)
       batch_size = tf.shape(outputs)[0]
       if self.output_dir is not None:
         os.makedirs(self.output_dir, exist_ok=True)
@@ -82,6 +79,7 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
               inputs["motion_name"][i].numpy().decode("utf-8"),
               inputs["audio_name"][i].numpy().decode("utf-8"),
           ))
+          print ("Saving results to %s" % save_path)
           np.save(save_path, output)  # [steps, motion_feature_dimension]
       # calculate metrics
       for metric in self.metrics:

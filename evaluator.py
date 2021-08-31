@@ -31,6 +31,7 @@ flags.DEFINE_string('model_dir', None,
                     'Directory to write training checkpoints and logs')
 flags.DEFINE_string('config_path', None, 'Path to the config file.')
 flags.DEFINE_string('eval_prefix', 'valid', 'Prefix for evaluation summaries.')
+flags.DEFINE_string('output_dir', 'outputs', 'Where to save the results.')
 
 # Unused flags to play nice with xm hyperparameter sweep. Add all flags under
 # hyperparameter sweep in trainer.py here.
@@ -56,7 +57,7 @@ def evaluate():
   model_.global_step = tf.Variable(initial_value=0, dtype=tf.int64)
   metrics_ = model_.get_metrics(eval_config)
   evaluator = single_task_evaluator.SingleTaskEvaluator(
-      dataset, label_key='target', model=model_, metrics=metrics_, output_dir='./results2/')
+      dataset, model=model_, metrics=metrics_, output_dir=FLAGS.output_dir)
 
   controller = orbit.Controller(
       evaluator=evaluator,
@@ -75,7 +76,8 @@ def main(_):
 
 
 if __name__ == '__main__':
-  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
   # run Keras in eager mode as well.
   tf.config.experimental_run_functions_eagerly(True)
+  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+
   app.run(main)
