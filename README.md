@@ -35,6 +35,9 @@ Note if you meet environment conflicts about numpy, you can try with `pip instal
 #### Get the data
 See the [website](https://google.github.io/aistplusplus_dataset/)
 
+#### Get the checkpoint
+Download from google drive [here](https://drive.google.com/drive/folders/17GHwKRZbQfyC9-7oEpzCG8pp_rAI0cOm?usp=sharing), and put them to the folder `./checkpoints/`
+
 #### Run the code
 
 1. complie protocols
@@ -59,6 +62,15 @@ python tools/preprocessing.py \
 python trainer.py --config_path ./configs/fact_v5_deeper_t10_cm12.config --model_dir ./checkpoints
 ```
 Note you might want to change the `batch_size` in the config file if you meet OUT-OF-MEMORY issue.
+
+4. run testing and evaluation
+```
+# caching the generated motions (seed included) to `./outputs`
+python evaluator.py --config_path ./configs/fact_v5_deeper_t10_cm12.config --model_dir ./checkpoints
+# calculate FIDs
+python tools/calculate_scores.py
+```
+
 
 ## Citation
 

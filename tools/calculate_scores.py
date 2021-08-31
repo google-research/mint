@@ -205,9 +205,9 @@ if __name__ == "__main__":
 
     # get motion features for the results
     result_features = {"kinetic": [], "manual": []}
-    result_files = glob.glob("results2/*.npy")
+    result_files = glob.glob("outputs/*.npy")
     for result_file in tqdm.tqdm(result_files):
-        result_motion = np.load(result_file)  # [1, 120 + 1200, 225]
+        result_motion = np.load(result_file)[None, ...]  # [1, 120 + 1200, 225]
         # visualize(result_motion, smpl)
         result_features["kinetic"].append(
             extract_feature(result_motion[:, 120:], smpl, "kinetic"))
@@ -220,5 +220,8 @@ if __name__ == "__main__":
     FID_g = calculate_frechet_feature_distance(
         real_features["manual"], result_features["manual"])
     
-    # Evaluation: FID_k: 38.8961, FID_g: 27.7747
+    # Evaluation: FID_k: ~38, FID_g: ~27
+    # The AIChoreo paper used a bugged version of manual feature extractor from 
+    # fairmotion (see here: https://github.com/facebookresearch/fairmotion/issues/50)
+    # So the FID_g here does not match with the paper. 
     print('\nEvaluation: FID_k: {:.4f}, FID_g: {:.4f}\n'.format(FID_k, FID_g))
