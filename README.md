@@ -68,6 +68,7 @@ Note you might want to change the `batch_size` in the config file if you meet OU
 # caching the generated motions (seed included) to `./outputs`
 python evaluator.py --config_path ./configs/fact_v5_deeper_t10_cm12.config --model_dir ./checkpoints
 # calculate FIDs
+python tools/extract_aist_features.py 
 python tools/calculate_scores.py
 ```
 

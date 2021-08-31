@@ -65,5 +65,5 @@ if __name__ == '__main__':
 
     # processing
     process = functools.partial(main, motion_dir=aist_dataset.motion_dir)
-    pool = multiprocessing.Pool(12)
+    pool = multiprocessing.Pool(8)
     pool.map(process, seq_names)

@@ -170,6 +170,19 @@ def extract_feature(motion, smpl_model, mode="kinetic"):
     return feature # (f_dim,)
 
 
+def calculate_avg_distance(feature_list, mean=None, std=None):
+    feature_list = np.stack(feature_list)
+    n = feature_list.shape[0]
+    # normalize the scale
+    if (mean is not None) and (std is not None):
+        feature_list = (feature_list - mean) / std
+    dist = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist += np.linalg.norm(feature_list[i] - feature_list[j])
+    dist /= (n * n - n) / 2
+    return dist
+
 def calculate_frechet_feature_distance(feature_list1, feature_list2):
     feature_list1 = np.stack(feature_list1)
     feature_list2 = np.stack(feature_list2)
@@ -180,13 +193,14 @@ def calculate_frechet_feature_distance(feature_list1, feature_list2):
     feature_list1 = (feature_list1 - mean) / std
     feature_list2 = (feature_list2 - mean) / std
 
-    dist = calculate_frechet_distance(
+    frechet_dist = calculate_frechet_distance(
         mu1=np.mean(feature_list1, axis=0), 
         sigma1=np.cov(feature_list1, rowvar=False),
         mu2=np.mean(feature_list2, axis=0), 
         sigma2=np.cov(feature_list2, rowvar=False),
     )
-    return dist
+    avg_dist = calculate_avg_distance(feature_list2)
+    return frechet_dist, avg_dist
 
 
 if __name__ == "__main__":
@@ -206,6 +220,7 @@ if __name__ == "__main__":
     # get motion features for the results
     result_features = {"kinetic": [], "manual": []}
     result_files = glob.glob("outputs/*.npy")
+    # result_files = [f for f in result_files if f[-8:-4] in f[:-8]]
     for result_file in tqdm.tqdm(result_files):
         result_motion = np.load(result_file)[None, ...]  # [1, 120 + 1200, 225]
         # visualize(result_motion, smpl)
@@ -215,15 +230,17 @@ if __name__ == "__main__":
             extract_feature(result_motion[:, 120:], smpl, "manual"))
     
     # FID metrics
-    FID_k = calculate_frechet_feature_distance(
+    FID_k, Dist_k = calculate_frechet_feature_distance(
         real_features["kinetic"], result_features["kinetic"])
-    FID_g = calculate_frechet_feature_distance(
+    FID_g, Dist_g = calculate_frechet_feature_distance(
         real_features["manual"], result_features["manual"])
     
-    # Evaluation: FID_k: ~38, FID_g: ~27
+    # Evaluation: FID_k: ~32, FID_g: ~17
+    # Evaluation: Dist_k: ~6, Dist_g: ~6
     # The AIChoreo paper used a bugged version of manual feature extractor from 
     # fairmotion (see here: https://github.com/facebookresearch/fairmotion/issues/50)
     # So the FID_g here does not match with the paper. But this value should be correct.
     # In this aistplusplus_api repo the feature extractor bug has been fixed.
     # (see here: https://github.com/google/aistplusplus_api/blob/main/aist_plusplus/features/manual.py#L50)
-    print('\nEvaluation: FID_k: {:.4f}, FID_g: {:.4f}\n'.format(FID_k, FID_g))
+    print('\nEvaluation: FID_k: {:.4f}, FID_g: {:.4f}'.format(FID_k, FID_g))
+    print('Evaluation: Dist_k: {:.4f}, Dist_g: {:.4f}\n'.format(Dist_k, Dist_g))
