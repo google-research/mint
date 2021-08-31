@@ -14,7 +14,6 @@
 """Tests for mint.core.base_models."""
 
 from mint.core import base_models
-from mint.protos import model_pb2
 import tensorflow as tf
 
 

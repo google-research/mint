@@ -19,7 +19,7 @@ import tensorflow as tf
 
 def create_input(train_eval_config,
                  dataset_config,
-                 num_cpu_threads=8,
+                 num_cpu_threads=2,
                  is_training=True,
                  use_tpu=False):
   """Create batched input data.
@@ -51,6 +51,7 @@ def create_input(train_eval_config,
       name_to_features.update({
           f"{modality}_sequence": tf.io.VarLenFeature(tf.float32),
           f"{modality}_sequence_shape": tf.io.FixedLenFeature([2], tf.int64),
+          f"{modality}_name": tf.io.FixedLenFeature([], tf.string),
       })
 
   if dataset_config.data_target_field:

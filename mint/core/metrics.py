@@ -31,7 +31,7 @@ class EulerAnglesError(tf.keras.metrics.Metric):
     self.euler_errors = self.add_weight(
         name='euler_errors', initializer='zeros')
 
-  def update_state(self, target, pred):
+  def update_state(self, inputs, pred):
     """Update metrics.
 
     Args:
@@ -40,6 +40,7 @@ class EulerAnglesError(tf.keras.metrics.Metric):
       pred: float32 tensor of shape [batch, sequence_length, (num_joints+1)*9]
         the predicted motion vector with the first 9 dim as the translation.
     """
+    target = inputs["target"]
     _, target_seq_len, _ = base_model_util.get_shape_list(target)
     euler_preds = tfg.euler.from_rotation_matrix(
         tf.reshape(pred[:, :target_seq_len, 9:], [-1, 3, 3]))

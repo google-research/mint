@@ -20,14 +20,14 @@ from mint.core import learning_schedules
 from mint.core import model_builder
 from mint.ctl import single_task_trainer
 from mint.utils import config_util
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
 
 
 TRAIN_STRATEGY = ['tpu', 'gpu']
 
 FLAGS = flags.FLAGS
-flags.DEFINE_enum('train_strategy', TRAIN_STRATEGY[0], TRAIN_STRATEGY,
+flags.DEFINE_enum('train_strategy', TRAIN_STRATEGY[1], TRAIN_STRATEGY,
                   'Whether to train with TPUs or Mirrored GPUs.')
 flags.DEFINE_string('master', None, 'BNS name of the TensorFlow tpu to use.')
 flags.DEFINE_string('config_path', None, 'Path to the config file.')
@@ -39,8 +39,8 @@ flags.DEFINE_string(
     'head_initializer', 'he_normal',
     'Initializer for prediction head. Valid options are any '
     'of the tf.keras.initializers.')
-flags.DEFINE_integer('steps', 42000, 'Number of training steps')
-flags.DEFINE_integer('warmup_steps', 100,
+flags.DEFINE_integer('steps', 2400000, 'Number of training steps')
+flags.DEFINE_integer('warmup_steps', 1000,
                      'Number of learning rate warmup steps')
 flags.DEFINE_float('weight_decay', None, 'L2 regularization penalty to apply.')
 flags.DEFINE_float('grad_clip_norm', 0., 'Clip gradients by norm.')
@@ -168,7 +168,7 @@ def train():
       checkpoint_manager=tf.train.CheckpointManager(
           tf.train.Checkpoint(optimizer=optimizer, model=model_),
           directory=FLAGS.model_dir,
-          checkpoint_interval=100,
+          checkpoint_interval=1000,
           step_counter=trainer.optimizer.iterations,
           max_to_keep=5),
       summary_dir=FLAGS.model_dir,

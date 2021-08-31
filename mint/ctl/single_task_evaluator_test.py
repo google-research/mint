@@ -14,7 +14,7 @@
 """Tests for the single_task_evaluator."""
 from mint.ctl import single_task_evaluator
 from mint.ctl import single_task_trainer
-import orbit
+from third_party.tf_models import orbit
 
 import tensorflow as tf
 import tensorflow_datasets as tfds

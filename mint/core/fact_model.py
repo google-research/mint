@@ -14,6 +14,7 @@
 """The main FACT model and related functions."""
 
 import copy
+import os
 from mint.core import base_model_util
 from mint.core import base_models
 from mint.core import metrics
@@ -69,15 +70,19 @@ class FACTModel(multi_modal_model.MultiModalModel):
         audio_transformer_config.hidden_size)
 
   def call(self, inputs):
-    """Predict sequences from inputs.
+    """Predict sequences from inputs. 
+
+    This is a single forward pass that been used during training. 
 
     Args:
-      inputs: Input dict of tensors, the output from the provide_inputs().
+      inputs: Input dict of tensors. The dict should contains 
+        `motion_input` ([batch_size, motion_seq_length, motion_feature_dimension]) and
+        `audio_input` ([batch_size, audio_seq_length, audio_feature_dimension]).
 
     Returns:
-      motion_sequence_output: Tensor of shape
-        [batch_size, seq_length, motion_feature_dimension]
-      motion_last_output: Tensor of shape [batch_size, motion_feature_dimension]
+      Final output after the cross modal transformer. A tensor with shape 
+      [batch_size, motion_seq_length + audio_seq_length, motion_feature_dimension]
+      will be return. **Be aware only the first N-frames are supervised during training**
     """
     # Computes motion features.
     motion_features = self.motion_linear_embedding(inputs["motion_input"])
@@ -95,15 +100,45 @@ class FACTModel(multi_modal_model.MultiModalModel):
 
     return output
 
+  def infer_auto_regressive(self, inputs, steps=1200):
+    """Predict sequences from inputs in an auto-regressive manner. 
+
+    This function should be used only during inference. During each forward step, 
+    only the first frame was kept. Inputs are shifted by 1 frame after each forward.
+
+
+    Args:
+      inputs: Input dict of tensors. The dict should contains 
+        `motion_input` ([batch_size, motion_seq_length, motion_feature_dimension]) and
+        `audio_input` ([batch_size, audio_seq_length, audio_feature_dimension]).
+
+    Returns:
+      Final output after the auto-regressive inference. A tensor with shape 
+      [batch_size, steps, motion_feature_dimension]
+      will be return.
+    """
+    audio_seq_length = self.feature_to_params["audio"]["sequence_length"]
+    outputs = []
+    motion_input = inputs["motion_input"]
+    for i in range(steps):
+      audio_input = inputs["audio_input"][:, i: i + audio_seq_length]
+      if tf.shape(audio_input)[1] < audio_seq_length:
+        break
+      output = self.call({"motion_input": motion_input, "audio_input": audio_input})
+      output = output[:, 0:1, :]  # only keep the first frame
+      outputs.append(output)
+      # update motion input
+      motion_input = tf.concat([motion_input[:, 1:, :], output], axis=1)
+    return tf.concat(outputs, axis=1)
+      
   def loss(self, target, pred):
     motion_generation_loss = self.compute_motion_generation_loss(pred, target)
     return motion_generation_loss
 
   def get_metrics(self, eval_config):
     """Computes metrics."""
-    eval_metric_config = eval_config.eval_metric.motion_generation_metrics
-    eval_metrics = [metrics.EulerAnglesError(eval_metric_config.num_joints)]
-    return eval_metrics
+    # Currently we do off-line metrics calculation.
+    return []
 
   def compute_motion_generation_loss(self, pred_tensors, target_tensors):
     """Compute motion generation loss from layer output."""

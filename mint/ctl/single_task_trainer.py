@@ -14,7 +14,7 @@
 """A trainer object that can train models with a single output."""
 
 from absl import logging
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
 
 

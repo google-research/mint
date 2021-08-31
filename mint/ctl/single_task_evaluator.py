@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """An evaluator object that can evaluate models with a single output."""
-import orbit
+from third_party.tf_models import orbit
 import tensorflow as tf
+import numpy as np
+import os
 
 
 class SingleTaskEvaluator(orbit.StandardEvaluator):
@@ -26,9 +28,9 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
 
   def __init__(self,
                eval_dataset,
-               label_key,
                model,
                metrics,
+               output_dir=None,
                evaluator_options=None):
     """Initializes a `SingleTaskEvaluator` instance.
 
@@ -38,18 +40,15 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
     Arguments:
       eval_dataset: A `tf.data.Dataset` or `DistributedDataset` that contains a
         string-keyed dict of `Tensor`s.
-      label_key: The key corresponding to the label value in feature
-        dictionaries dequeued from `eval_dataset`. This key will be removed from
-        the dictionary before it is passed to the model.
       model: A `tf.Module` or Keras `Model` object to evaluate.
       metrics: A single `tf.keras.metrics.Metric` object, or a list of
         `tf.keras.metrics.Metric` objects.
       evaluator_options: An optional `orbit.StandardEvaluatorOptions` object.
     """
 
-    self.label_key = label_key
     self.model = model
     self.metrics = metrics if isinstance(metrics, list) else [metrics]
+    self.output_dir = output_dir
 
     # Capture the strategy from the containing scope.
     self.strategy = tf.distribute.get_strategy()
@@ -66,13 +65,26 @@ class SingleTaskEvaluator(orbit.StandardEvaluator):
     """One eval step. Called multiple times per eval loop by the superclass."""
 
     def step_fn(inputs):
-      # Extract the target value and delete it from the input dict, so that
-      # the model never sees it.
-      target = inputs.pop(self.label_key)
-      output = self.model(inputs)
+      # [batch_size, steps, motion_feature_dimension]
+      outputs = self.model.infer_auto_regressive(inputs, steps=1200)
+      # [batch_size, motion_seq_length + steps, motion_feature_dimension]
+      outputs = tf.concat([inputs["motion_input"], outputs], axis=1)
+      batch_size = tf.shape(outputs)[0]
+      if self.output_dir is not None:
+        os.makedirs(self.output_dir, exist_ok=True)
+        # save each batch instance seperately
+        for i in range(batch_size):
+          output = outputs[i].numpy()
+          save_path = os.path.join(self.output_dir, "%s_%s.npy" % (
+              inputs["motion_name"][i].numpy().decode("utf-8"),
+              inputs["audio_name"][i].numpy().decode("utf-8"),
+          ))
+          print ("Saving results to %s" % save_path)
+          np.save(save_path, output)  # [steps, motion_feature_dimension]
+      # calculate metrics
       for metric in self.metrics:
-        metric.update_state(target, output)
-
+        metric.update_state(inputs, outputs)
+      
     # This is needed to handle distributed computation.
     self.strategy.run(step_fn, args=(next(iterator),))
 

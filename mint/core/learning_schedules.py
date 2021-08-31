@@ -125,7 +125,7 @@ class WarmUp(tf.keras.optimizers.schedules.LearningRateSchedule):
     }
 
 
-class CosineDecayWithWarmup(tf.keras.optimizers.schedules.CosineDecay):
+class CosineDecayWithWarmup(tf.keras.optimizers.schedules.LearningRateSchedule):
   """Cosine Decay with linear warmup.
 
   Extends Keras Cosine Decay Schedule to include a linear warmup at the
@@ -145,8 +145,7 @@ class CosineDecayWithWarmup(tf.keras.optimizers.schedules.CosineDecay):
       alpha: A scalar `float32` or `float64` Tensor or a Python number. Minimum
         learning rate value as a fraction of initial_learning_rate.
     """
-    super(CosineDecayWithWarmup, self).__init__(initial_learning_rate,
-                                                steps - warmup, alpha)
+    super(CosineDecayWithWarmup, self).__init__()
 
     self.initial_learning_rate = initial_learning_rate
     self.steps = steps

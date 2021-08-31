@@ -14,6 +14,8 @@ limitations under the License.
 ==============================================================================*/
 syntax = "proto2";
 
+package mint.protos;
+
 import "mint/protos/preprocessor.proto";
 
 message Dataset {
