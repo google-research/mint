@@ -151,7 +151,7 @@ def calculate_frechet_distance(mu1, sigma1, mu2, sigma2, eps=1e-6):
             + np.trace(sigma2) - 2 * tr_covmean)
 
 
-def extract_feature(motion, smpl_model, mode="kinetic"):
+def recover_motion_to_keypoints(motion, smpl_model):
     smpl_poses, smpl_trans = recover_to_axis_angles(motion)
     smpl_poses = np.squeeze(smpl_poses, axis=0)  # (seq_len, 24, 3)
     smpl_trans = np.squeeze(smpl_trans, axis=0)  # (seq_len, 3)
@@ -160,7 +160,10 @@ def extract_feature(motion, smpl_model, mode="kinetic"):
         body_pose=torch.from_numpy(smpl_poses[:, 1:]).float(),
         transl=torch.from_numpy(smpl_trans).float(),
     ).joints.detach().numpy()[:, :24, :]   # (seq_len, 24, 3)
+    return keypoints3d
 
+
+def extract_feature(keypoints3d, mode="kinetic"):
     if mode == "kinetic":
       feature = extract_kinetic_features(keypoints3d)
     elif mode == "manual":
@@ -182,6 +185,7 @@ def calculate_avg_distance(feature_list, mean=None, std=None):
             dist += np.linalg.norm(feature_list[i] - feature_list[j])
     dist /= (n * n - n) / 2
     return dist
+
 
 def calculate_frechet_feature_distance(feature_list1, feature_list2):
     feature_list1 = np.stack(feature_list1)
@@ -213,7 +217,7 @@ if __name__ == "__main__":
         "kinetic": [np.load(f) for f in glob.glob("./data/aist_features/*_kinetic.npy")],
         "manual": [np.load(f) for f in glob.glob("./data/aist_features/*_manual.npy")],
     }
-
+    
     # set smpl
     smpl = SMPL(model_path="/mnt/data/smpl/", gender='MALE', batch_size=1)
 
@@ -221,14 +225,14 @@ if __name__ == "__main__":
     result_features = {"kinetic": [], "manual": []}
     result_files = glob.glob("outputs/*.npy")
     # result_files = [f for f in result_files if f[-8:-4] in f[:-8]]
+    beat_alignment_score = 0
     for result_file in tqdm.tqdm(result_files):
         result_motion = np.load(result_file)[None, ...]  # [1, 120 + 1200, 225]
         # visualize(result_motion, smpl)
-        result_features["kinetic"].append(
-            extract_feature(result_motion[:, 120:], smpl, "kinetic"))
-        result_features["manual"].append(
-            extract_feature(result_motion[:, 120:], smpl, "manual"))
-    
+        keypoints3d = recover_motion_to_keypoints(result_motion[:, 120:], smpl)
+        result_features["kinetic"].append(extract_feature(keypoints3d, "kinetic"))
+        result_features["manual"].append(extract_feature(keypoints3d, "manual"))
+
     # FID metrics
     FID_k, Dist_k = calculate_frechet_feature_distance(
         real_features["kinetic"], result_features["kinetic"])

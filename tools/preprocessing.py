@@ -20,7 +20,7 @@ flags.DEFINE_string(
     'audio_dir', '/mnt/data/AIST/music/', 
     'Path to the AIST wav files.')
 flags.DEFINE_string(
-    'audio_cache_dir', '/tmp/aist_audio_feats/', 
+    'audio_cache_dir', './data/aist_audio_feats/', 
     'Path to cache dictionary for audio features.')
 flags.DEFINE_enum(
     'split', 'train', ['train', 'testval'],
