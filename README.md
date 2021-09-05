@@ -18,14 +18,11 @@ Note here `--recursive` is important as it will automatically clone the submodul
 conda create -n mint python=3.7
 conda activate mint
 conda install protobuf numpy
-pip install tensorflow absl-py tensorflow-datasets librosa
+pip install tensorflow absl-py tensorflow-datasets librosa einops
 
 sudo apt-get install libopenexr-dev
 pip install --upgrade OpenEXR
 pip install tensorflow-graphics tensorflow-graphics-gpu
-
-git clone https://github.com/arogozhnikov/einops /tmp/einops
-cd /tmp/einops/ && pip install . -U
 
 git clone https://github.com/google/aistplusplus_api /tmp/aistplusplus_api
 cd /tmp/aistplusplus_api && pip install -r requirements.txt && pip install . -U
