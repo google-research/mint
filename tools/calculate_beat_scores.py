@@ -6,6 +6,7 @@ import os
 from librosa import beat
 import torch
 import numpy as np
+import pickle
 from scipy.spatial.transform import Rotation as R
 import scipy.signal as scisignal
 from aist_plusplus.loader import AISTDataset
@@ -13,17 +14,23 @@ from aist_plusplus.loader import AISTDataset
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string(
-    'anno_dir', '/mnt/data/aist_plusplus_final/', 
+    'anno_dir', '/mnt/data/aist_plusplus_final/',
     'Path to the AIST++ annotation files.')
 flags.DEFINE_string(
-    'audio_dir', '/mnt/data/AIST/music/', 
+    'audio_dir', '/mnt/data/AIST/music/',
     'Path to the AIST wav files.')
 flags.DEFINE_string(
-    'audio_cache_dir', './data/aist_audio_feats/', 
+    'audio_cache_dir', './data/aist_audio_feats/',
     'Path to cache dictionary for audio features.')
 flags.DEFINE_enum(
-    'split', 'train', ['train', 'testval'],
+    'split', 'testval', ['train', 'testval'],
     'Whether do training set or testval set.')
+flags.DEFINE_string(
+    'result_files', '/mnt/data/aist_paper_results/*.pkl',
+    'The path pattern of the result files.')
+flags.DEFINE_bool(
+    'legacy', True,
+    'Whether the result files are the legacy version.')
 
 
 def eye(n, batch_shape):
@@ -52,7 +59,7 @@ def get_closest_rotmat(rotmats):
     iden[..., 2, 2] = np.sign(det)
     r_closest = np.matmul(np.matmul(u, iden), vh)
     return r_closest
-    
+
 
 def recover_to_axis_angles(motion):
     batch_size, seq_len, dim = motion.shape
@@ -116,7 +123,7 @@ def alignment_score(music_beats, motion_beats, sigma=3):
         ind = np.argmin(dists)
         score = np.exp(- dists[ind]**2 / 2 / sigma**2)
         score_all.append(score)
-    return sum(score_all) / len(score_all) 
+    return sum(score_all) / len(score_all)
 
 
 def main(_):
@@ -172,17 +179,32 @@ def main(_):
     print ("\nBeat score on real data: %.3f\n" % (sum(beat_scores) / n_samples))
 
     # calculate score on generated motion data
-    result_files = glob.glob("outputs/*.npy")
-    # result_files = [f for f in result_files if f[-8:-4] in f[:-8]]
+    result_files = sorted(glob.glob(FLAGS.result_files))
+    result_files = [f for f in result_files if f[-8:-4] in f[:-8]]
+    if FLAGS.legacy:
+        # for some reason there are repetitive results. Skip them
+        result_files = {f[-34:]: f for f in result_files}
+        result_files = result_files.values()
     n_samples = len(result_files)
     beat_scores = []
     for result_file in tqdm.tqdm(result_files):
-        result_motion = np.load(result_file)[None, ...]  # [1, 120 + 1200, 225]
+        if FLAGS.legacy:
+            with open(result_file, "rb") as f:
+                data = pickle.load(f)
+            result_motion = np.concatenate([
+                np.pad(data["pred_trans"], ((0, 0), (0, 0), (6, 0))),
+                data["pred_motion"].reshape(1, -1, 24 * 9)
+            ], axis=-1)  # [1, 120 + 1200, 225]
+        else:
+            result_motion = np.load(result_file)[None, ...]  # [1, 120 + 1200, 225]
         keypoints3d = recover_motion_to_keypoints(result_motion, smpl)
         motion_beats = motion_peak_onehot(keypoints3d)
-        audio_name = result_file[-8:-4]
-        audio_feature = np.load(os.path.join(FLAGS.audio_cache_dir, f"{audio_name}.npy"))
-        audio_beats = audio_feature[:, -1] # last dim is the music beats
+        if FLAGS.legacy:
+            audio_beats = data["audio_beats"][0] > 0.5
+        else:
+            audio_name = result_file[-8:-4]
+            audio_feature = np.load(os.path.join(FLAGS.audio_cache_dir, f"{audio_name}.npy"))
+            audio_beats = audio_feature[:, -1] # last dim is the music beats
         beat_score = alignment_score(audio_beats[120:], motion_beats[120:], sigma=3)
         beat_scores.append(beat_score)
     print ("\nBeat score on generated data: %.3f\n" % (sum(beat_scores) / n_samples))
